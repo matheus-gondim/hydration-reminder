@@ -2,10 +2,10 @@ package config
 
 import (
 	"fmt"
-	"github.com/matheus-gondim/hydration-reminder/pkg/utils"
-	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
+
+	"gopkg.in/yaml.v3"
 )
 
 var Envs *Config
@@ -31,7 +31,7 @@ func Load() (*Config, error) {
 
 	basicPath := "./"
 	if _, err := os.Stat(filepath.Join(basicPath, filename)); os.IsNotExist(err) {
-		basicPath, err = utils.GetProjectRoot()
+		basicPath, err = getProjectRoot()
 		if err != nil {
 			return nil, err
 		}
@@ -73,4 +73,25 @@ func (c *Config) validate() error {
 	}
 
 	return nil
+}
+
+func getProjectRoot() (string, error) {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		if _, err := os.Stat(filepath.Join(currentDir, "go.mod")); err == nil {
+			return currentDir, nil
+		}
+
+		parentDir := filepath.Dir(currentDir)
+		if parentDir == currentDir {
+			break
+		}
+		currentDir = parentDir
+	}
+
+	return "", fmt.Errorf("não foi possível encontrar a raiz do projeto")
 }
